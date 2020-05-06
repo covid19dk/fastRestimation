@@ -17,6 +17,6 @@ dt.list$r200505$V1 %<>% (function(x) x/64*63)
 p = plot_ly(data=dt,x=~V1,y=~V2, type = "scatter", mode="lines+markers",name=names(dt.list)[1])
 j=1; for(i in dt.list[-1]) p %<>% add_trace(data=i,x=~V1,y=~V2,name=names(dt.list)[(j<<-j+1)])
 p %<>% layout(xaxis=list(title="days since 1st march 2020"),yaxis=list(title="daily new hospitalizations")) 
-
-saveWidget(p,"viewReportedHospitalizations.html")
+p
+#saveWidget(p,"viewReportedHospitalizations.html")
 
