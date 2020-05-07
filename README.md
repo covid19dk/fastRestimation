@@ -1,2 +1,2 @@
 # fastRestimation
-code to estimate R "reproduction rate" 2-8 day earlier than SSI
+code project to try estimate R "reproduction rate" 2-8 day earlier than SSI
