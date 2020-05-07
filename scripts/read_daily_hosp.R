@@ -29,6 +29,7 @@ j=0; dt.list = lapply(dt.list, function(x,J)  {
   theseDays = seq(firstDay,dt.list.dates[j<<-j+1],by = 1)
   x = x[match(theseDays,x$Date),]
   x$Date = theseDays
+  x$dailyHosp[1] = 1
   x$dailyHosp[is.na(x$dailyHosp)] = 0
   #x$diffday[is.na(x$diffday)] = 0
   x$Cdate = as.character(x$Date)
