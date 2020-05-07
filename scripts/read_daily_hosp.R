@@ -24,8 +24,7 @@ dt.list$r200505$diffday %<>% (function(x) x/64*63)
 #round numbers and insert missing zeros
 
 dt.list %<>% lapply(round)
-j=0
-dt.list = lapply(dt.list, function(x,J)  {
+j=0; dt.list = lapply(dt.list, function(x,J)  {
   x[,Date := firstDay+diffday]
   theseDays = seq(firstDay,dt.list.dates[j<<-j+1],by = 1)
   x = x[match(theseDays,x$Date),]
@@ -40,6 +39,7 @@ dt.list = lapply(dt.list, function(x,J)  {
 df =do.call(data.frame,lapply(dt.list, function(x) x[as.character(ALLDays),dailyHosp]))
 row.names(df) = ALLDays
 View(df)
+write.csv(df,file = "./data/SSI_daily_hosp_processed/fulltable.csv")
 
 
 
