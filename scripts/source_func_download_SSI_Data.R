@@ -1,3 +1,4 @@
+library(magrittr)
 library(rvest)
 
 #' Get latest Data-Epidemiologiske-Rapport zipfile-url
