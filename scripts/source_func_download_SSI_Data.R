@@ -1,4 +1,5 @@
 library(magrittr)
+library(xml2)
 library(rvest)
 
 #' Get latest Data-Epidemiologiske-Rapport zipfile-url
