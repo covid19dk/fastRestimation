@@ -51,3 +51,37 @@ download_unzip = function(url,path=".",filename=NULL) {
   names(new_paths) = extracted_filenames[success_idx]
   return(new_paths)
 }
+
+#' precodedure to read 
+#'
+#' @param fdir 
+#' @param fext 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+read_SSI_raw = function(
+  fdir="./data/SSI_daily_hosp_raw/",
+  fext = ".csv"
+){
+  
+  fpaths = list.files(fdir,fext,full.names = T)
+  names(fpaths) = list.files(fdir,fext) %>% (function(x) gsub(fext,"",x))
+  fpaths %<>% sort
+  dt.list = lapply(fpaths,fread,col.names=c("diffday","dailyHosp"))
+  
+  firstDay = as.Date.character("200301",format="%y%m%d")
+  dt.list.dates = as.Date.character(substr(names(fpaths),2,7) ,format="%y%m%d")
+  names(dt.list.dates) = names(dt.list)
+  lastDay = tail(dt.list.dates,1)
+  ALLDays = seq(firstDay,lastDay,by = 1)
+  
+  #correct single offset in raw data
+  dt.list$r200505$diffday %<>% (function(x) x/64*63)
+  
+  return(dt.list)
+}
+
+
+
