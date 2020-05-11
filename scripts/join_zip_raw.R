@@ -28,6 +28,9 @@ for(i in seq_along(ssi.zip.paths)) {
   rname = attr(ssi.zip.paths,"rname")[i]
   x = fread(paste0("./data/SSI_csv/",ssi.zip.paths[i]))
   x = x[-seq_len(which(Dato=="2020-03-01")-1)]
+  setkey(x,"Dato")
+  x = rbind(x,x[as.character(max(as.Date(x$Dato))+1)]) #add same days report to stay concistant with tables
+  x$Antal_nyindlagte[nrow(x)] = 0
   setkey(ssi_proc,"Date")
   ssi_proc = ssi_proc[x$Dato,]
   ssi_proc[[rname]] = x$Antal_nyindlagte
