@@ -7,6 +7,8 @@ require(reshape2)
 library(ggcorrplot)
 library(shinydashboardPlus)
 library(shinyFiles)
+library(rvest)
+library(data.table)
 
 
 rm(list=ls())
@@ -14,7 +16,7 @@ library(rvest)
 library(data.table)
 library(plotly)
 
-setwd("../.")
+#setwd("../.")
 
 #update with latest data
 source("./scripts/join_zip_raw.R") #deletes workspace
@@ -26,7 +28,7 @@ source("./scripts/source_model.R")
 admissions = fread("./data/SSI_daily_hosp_processed/fulltable_joined.csv")
 X = admission2trainX(admissions,6)
 
-setwd("./shiny")
+#setwd("./shiny")
 
 #standard linear regression models for each lag
 models_reg_ss = list(
