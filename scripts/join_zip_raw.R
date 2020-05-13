@@ -9,10 +9,13 @@ ssi_proc = fread("./data/SSI_daily_hosp_processed/fulltable.csv")
 names(ssi_proc)[1] = "Date"
 setkey(ssi_proc,"Date")
 
-#download latest zip data data source
+#download latest zip data data source, if not already downloaded
 ssi_url = get_download_url() #get url for latest zip file
-ssi_date = tail(strsplit(ssi_url,"-")[[1]],2)[1]
-new_files = download_unzip(ssi_url,paste0("./data/SSI_csv/date",ssi_date))
+new_date = strsplit(ssi_url,"-")[[1]] %>% tail(2) %>% head(1)
+if(!paste0("date",new_date) %in% list.files("./data/SSI_csv/")) {
+  ssi_date = tail(strsplit(ssi_url,"-")[[1]],2)[1]
+  new_files = download_unzip(ssi_url,paste0("./data/SSI_csv/date",ssi_date))
+}
 
 ssi.zip.paths = 
   list.files("./data/SSI_csv/",recursive = TRUE) %>% 

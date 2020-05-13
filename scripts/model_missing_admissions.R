@@ -3,156 +3,101 @@ library(rvest)
 library(data.table)
 library(plotly)
 
-make_ts_plot = function(admissions) {
-  p = plot_ly(x=admissions$Date,y=admissions[[2]], type = "scatter", mode="lines+markers",name=names(admissions)[2])
-  for(i in 3:ncol(admissions)) p %<>% add_trace(y=admissions[[i]],name=names(admissions)[i])
-  p %<>% layout(
-    xaxis=list(title="days since 1st march 2020"),
-    yaxis=list(title="daily new hospitalizations",type="")
-  )
-  p
-}
-
+#update with latest data
+source("./scripts/join_zip_raw.R")
 
 source("./scripts/source_func_download_SSI_Data.R")
+source("./scripts/source_model.R")
+
 
 #read processed raw figures
 admissions = fread("./data/SSI_daily_hosp_processed/fulltable_joined.csv")
-setkey(admissions,"Date")
-class(admissions$Date)
+X = admission2trainX(admissions,6)
 
+#show time series
 make_ts_plot(admissions)
 
+#refold data into training table, x0 is same day, x1 is the day after
 
-#make table of report release day(column) vs observed numberf or day (row)
-col_dates = as.Date(colnames(admissions)[-1],format="r%y%m%d")
-names(col_dates) = as.character(col_dates,format="r%y%m%d")
-n_lag = 6
-use_these_dates = head(col_dates,-n_lag)
-X = do.call(rbind,lapply(use_these_dates, function(i) {
-  this_date = i
-  these_dates  = this_date+(0:n_lag) #days after report released
-  this_cdate = as.character(this_date)
-  these_reports = names(col_dates)[match(these_dates,col_dates)]
-  x = admissions[this_cdate,..these_reports]
-  names(x) = paste0("x",0:n_lag)
-  x
-}))
-X = data.table(Date = use_these_dates,X)
 
 View(X)
-
-add_class = function(x,newclass,append=TRUE) {
-  class(x) = c(newclass,if(append) class(x)) 
-  return(x)
-} 
- 
-#ols regression, gaussian loss (SS og sqaures)
+#standard linear regression models for each lag
 models_reg_ss = list(
   m1 = lm(x6~x1 ,data=X),
   m2 = lm(x6~x2 ,data=X),
   m3 = lm(x6~x3 ,data=X),
   m4 = lm(x6~x4 ,data=X),
   m5 = lm(x6~x5 ,data=X)
-) %>% lapply(add_class,newclass="ols_ss") %>% add_class("model_list")
+) %>% 
+  lapply(add_class,newclass="simple_univariate_lm") %>% #tag each model with non-formula interface
+  add_class("model_list")  #interface for pair wise prediction of model_list and input data list
 
-#add simple predict interface
-predict.ols_ss = function(x,newdata) {sapply(newdata,function(y) sum(coef(x)[1] + coef(x)[-1] *y ))}
-
-#make a trainer and predicter to fit OLS_mad 
-OLS_mad = function(x,y) {
-  f = function(k) abs(mean(x*k)-mean(y))
-  result = optimize(f,c(0,100))
-  class(result) = "OLS_mad_model"
-  return(result)
-}
-predict.OLS_mad_model = function(model,newx) {
-  newx*model$minimum
-}
-
-models_ols_mad = list(
-    m1 = OLS_mad(X$x1,X$x6),
-    m2 = OLS_mad(X$x2,X$x6),
-    m3 = OLS_mad(X$x3,X$x6),
-    m4 = OLS_mad(X$x4,X$x6),
-    m5 = OLS_mad(X$x5,X$x6)
+#OLR (ordinary least roots. OLS with a mean average deviation loss)
+models_lin_mad = list(
+    m1 = OLR(X$x1,X$x6),
+    m2 = OLR(X$x2,X$x6),
+    m3 = OLR(X$x3,X$x6),
+    m4 = OLR(X$x4,X$x6),
+    m5 = OLR(X$x5,X$x6)
 ) %>% add_class("model_list")
 
-subset_keep_attr = function(x,val) {
-  atrs = attributes(x)
-  x = unclass(x)
-  x = x[val]
-  if(!is.null(atrs$names)) atrs$names = atrs$names[val]
-  attributes(x) = atrs
-  return(x)
-}
-'[.model_list' = subset_keep_attr
 
-predict.model_list = function(modellist, newdata) {
-  if(length(model_list)!=length(newdata)) stop("input data must be same length as model list")
-  results = lapply(seq_along(model_list), function(i) predict(model_list[[i]],newdata[[i]]))
-  return(results)
-}
+#showcase interface
+#predicting with model 1, 2 and 3 with 3 datasets
+predict(models_lin_mad[1:3],list(1:5,1:5,1:5))
+predict(models_reg_ss[c("m2","m4","m5")],list(1:5,1:5,1:5))
 
 
-
-
-# class(models) = c("laggedlm","classlm")
-# predict.laggedlm = function(model,x) {
-#   lmod =length(model)
-#   attrx = attributes(x)
-#   x = head(x,-1) #drop last measurement, as always zero ang carrries no information
-# 
-#   #each day by corrosponding linear model
-#   input = tail(x,lmod) #extract last n_days from timeseries
-#   coefDF =t(sapply(models,coef)) %>% as.data.frame()
-#   coefDF = coefDF[nrow(coefDF):1,]
-#   results = input  * coefDF[["x1"]] + coefDF[["(Intercept)"]]
-# 
-#   #insert predictions into
-#   lx = length(x)
-#   x[(lx-lmod+1):lx] = results
-# 
-#   x = c(x,NA) #add last measurement as missing
-#   attributes(x) = attrx #restore any attributes
-#   return(x)
-# }
-# i=1
-# 
-# i=1
-# x = admissions[[i<<-i+1]]
-# names(x) =  admissions$Date
-# x=na.omit(x)
-# plot(
-# x = names(x) %>% as.Date,  
-# y = x,
-# type="l"
-# )
-# points(
-#   x = admissions$Date %>% as.Date,  
-#   y = admissions$r200510,
-#   type="b",col="green"
-# )
-# points(
-#   x =names(x) %>% as.Date,  
-#   y = predict(models,x),
-#   type="b",col="red"
-# )
-# 
 
 
 class(admissions)
 head(admissions,-5)[,plot(as.Date(Date),r200510,type="l",lwd=2)]
-plot(X$Date,X$x6,type="l",ylim=c(0,50),lwd=3)
-#points(X$Date,predict(models$m1,X$x1)*1.3,type="l",col="#FF0000")
-points(X$Date,predict(models_ols_mad$m2,X$x2),type="l",col="#DD0000")
-points(X$Date,predict(models_ols_mad$m3,X$x3),type="l",col="#AA0000")
-points(X$Date,predict(models_ols_mad$m4,X$x4),type="l",col="#990000")
-points(X$Date,predict(models_ols_mad$m5,X$x5),type="l",col="#770000")
-points(X$Date,predict(models_reg_ss$m2,X$x2),type="l",col="#00DD00")
-points(X$Date,predict(models_reg_ss$m3,X$x3),type="l",col="#00AA00")
-points(X$Date,predict(models_reg_ss$m4,X$x4),type="l",col="#009900")
-points(X$Date,predict(models_reg_ss$m5,X$x5),type="l",col="#007700")
 
+#points(X$Date,predict(models$m1,X$x1)*1.3,type="l",col="#FF0000")
+olr_pred = predict(models_lin_mad,X[,.(x1,x2,x3,x4,x5)])
+ssr_pred = predict(models_reg_ss ,X[,.(x1,x2,x3,x4,x5)])
+
+x_pred = olr_pred
+cols = colorRampPalette(c("blue","red"),bias=.3)(5)%>% rev
+Data = admissions[-(nrow(admissions)-(0:5))]
+names(Data)[ncol(Data)] = "latest" 
+p = plot_ly(data = Data,x=~Date,y=~latest ,type="scatter",mode="lines+markers",name="True admissions",
+            marker = list(color="black"),line=list(color="black"))
+for(i in seq_along(x_pred) %>% rev) {
+  p %<>% add_trace(x=X$Date,y=x_pred[[i]],name=paste0("m",i),
+                   marker = list(color=cols[i]),line=list(color=cols[i]))  
+}
+p
+View(admissions)
+
+
+latest_vec = admissions[[ncol(admissions)]]
+names(latest_vec) = admissions$Date
+
+current_day = tail(admissions$Date,1)
+class(current_day)
+
+p = plot_ly(x=admissions$Date,y=latest_vec ,type="scatter",mode="lines+markers",name="True admissions",
+            marker = list(color="black"),line=list(color="black"))
+days_to_predict = latest_vec[as.character(as.Date(current_day)-(2:5))]
+days_pred = predict(models_lin_mad[2:5],as.list(days_to_predict)) %>% unlist
+
+  p = add_trace(p,x=names(days_pred),y=days_pred,name="combined models",
+                   marker = list(color="red"),line=list(color="red")  )
+p
+
+
+View(admissions)
+
+
+
+p = plot_ly(data = X,x=~Date,y=~x6,name="x6",type="scatter",mode="lines+markers")
+for(i in 5:1) {
+  this_name = paste0("x",i)
+  this_model = paste0("m",i)
+  these_preds = predict(models_lin_mad[[this_model]], X[[this_name]])
+  p %<>% add_trace(y= these_preds ,name=this_name)
+}
+p
 
 
