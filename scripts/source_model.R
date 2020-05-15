@@ -8,12 +8,12 @@ library(plotly)
 #' @export
 #'
 #' @examples
-make_ts_plot = function(admissions) {
+make_ts_plot = function(admissions,logY=FALSE) {
   p = plot_ly(x=admissions$Date,y=admissions[[2]], type = "scatter", mode="lines+markers",name=names(admissions)[2])
   for(i in 3:ncol(admissions)) p %<>% add_trace(y=admissions[[i]],name=names(admissions)[i])
   p %<>% layout(
     xaxis=list(title=""),
-    yaxis=list(title="daily new hospitalizations",type="")
+    yaxis=list(title="daily new hospitalizations",type=if(logY) "log" else "")
   )
   p
 }

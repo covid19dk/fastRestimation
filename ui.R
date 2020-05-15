@@ -13,6 +13,7 @@ ui = fluidPage(
       br(),
       h3(" daily SSI's admission (r)eports by date(yymmdd) "),
       plotly::plotlyOutput("showTS"),
+      shiny::checkboxInput("showTS_logY","click to use log10 scale on y-axis"),
       p(paste0(
         "Daily observed admisssions are reported by SSI. Day 0 (same day as report is released) is always zero. ",
         "Patients are not defined as having COVID-19 before confirmed with a test. It can takes 1-5 days before ",

@@ -59,7 +59,7 @@ server = function(input,output,session) {
   
   output$showTS = renderPlotly({
     
-    make_ts_plot(admissions)
+    make_ts_plot(admissions,input$showTS_logY)
     
   })
   
