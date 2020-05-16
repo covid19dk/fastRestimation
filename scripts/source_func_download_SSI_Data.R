@@ -13,7 +13,7 @@ library(rvest)
 #' @examples url_to_zipfile = get_download_url()
 get_download_url = function(
   url = "https://www.ssi.dk/aktuelt/sygdomsudbrud/coronavirus/covid-19-i-danmark-epidemiologisk-overvaagningsrapport",
-  link_tag = "Data-Epidemiologiske-Rapport"
+  link_tag = "Data-epidemiologisk-rapport"
 ) {
   nodes = read_html(url)
   all_links = xml2::xml_find_all(nodes,'//*[@id="top"]//a/@href') 

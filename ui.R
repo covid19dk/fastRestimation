@@ -8,7 +8,7 @@ ui = fluidPage(
       h5(paste(
         "Update: since 14th of May, SSI's has changed their method to report admissions. ",
         "The latest reports now has a backwards correction from ~2100 to ~2400 total admissions. ",
-        "It appears admissions numbers by the new method are already stable after 1day. This makes this analysis obsolete.",
+        "It appears admissions numbers becomes faster stable, almost within first day.",
         "Anyone can now compute R values just using the lastest data (except release day)")),
       br(),
       h3(" daily SSI's admission (r)eports by date(yymmdd) "),
