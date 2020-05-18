@@ -11,10 +11,12 @@ setkey(ssi_proc,"Date")
 
 #download latest zip data data source, if not already downloaded
 ssi_url = get_download_url() #get url for latest zip file
-new_date = strsplit(ssi_url,"-")[[1]] %>% tail(2) %>% head(1)
-if(!paste0("date",new_date) %in% list.files("./data/SSI_csv/")) {
-  ssi_date = tail(strsplit(ssi_url,"-")[[1]],2)[1]
-  new_files = download_unzip(ssi_url,paste0("./data/SSI_csv/date",ssi_date))
+if(!is.null(ssi_url)) {
+  new_date = strsplit(ssi_url,"-")[[1]] %>% tail(2) %>% head(1)
+  if(!paste0("date",new_date) %in% list.files("./data/SSI_csv/")) {
+    ssi_date = tail(strsplit(ssi_url,"-")[[1]],2)[1]
+    new_files = download_unzip(ssi_url,paste0("./data/SSI_csv/date",ssi_date))
+  }
 }
 
 ssi.zip.paths = 

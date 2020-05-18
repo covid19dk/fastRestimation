@@ -13,13 +13,13 @@ library(rvest)
 #' @examples url_to_zipfile = get_download_url()
 get_download_url = function(
   url = "https://www.ssi.dk/aktuelt/sygdomsudbrud/coronavirus/covid-19-i-danmark-epidemiologisk-overvaagningsrapport",
-  link_tag = "Data-epidemiologisk-rapport"
+  link_tag = "data-epidemiologisk"
 ) {
   nodes = read_html(url)
-  all_links = xml2::xml_find_all(nodes,'//*[@id="top"]//a/@href') 
-  the_link = all_links[grep(link_tag,all_links)] %>% as.character
+  all_links = xml2::xml_find_all(nodes,'//*[@id="top"]//a/@href')  %>% as.character
+  the_link = all_links[grep(link_tag,tolower(all_links))]
   if(length(the_link)!=1) warning(paste("unexpected found not 1 link:",paste(the_link,collapse = " and also ")))
-  if(!length(the_link)) stop("no link found")
+  if(!length(the_link)) {warning("no link found");return(NULL)}
   the_dl_url = the_link %>% trimws %>% gsub(pat="href=",repl="") %>% gsub(pat='\\"',repl='')
   return(the_dl_url)
 }
